@@ -1,0 +1,17 @@
+{
+"$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+"AuthorDetails": {
+"Name": "Erik-Jan Westendorp",
+"Description": ".NET Developer at ilionx, Umbraco MVP",
+"Url": "https://github.com/erikjanwestendorp",
+"ImageUrl": "https://github.com/erikjanwestendorp.png",
+"SyncContributorsFromRepository": true
+},
+"Category": "Developer Tools",
+"LicenseTypes": ["Free"],
+"PackageType": "Package",
+"IssueTrackerUrl": "https://github.com/erikjanwestendorp/Umbraco.Community.HealthProbes/issues",
+"Title": "HealthProbes",
+"Description": "Community health probe package scaffold for Umbraco CMS.",
+"Tags": ["HealthProbes", "Monitoring", "DeveloperTools", "Umbraco"]
+}

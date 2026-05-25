@@ -1,0 +1,34 @@
+name: Publish NuGet Packages
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore HealthProbes
+        run: dotnet restore ./src/Umbraco.Community.HealthProbes/Umbraco.Community.HealthProbes.csproj
+
+      - name: Build HealthProbes
+        run: dotnet build ./src/Umbraco.Community.HealthProbes/Umbraco.Community.HealthProbes.csproj --configuration Release --no-restore
+
+      - name: Pack HealthProbes
+        run: dotnet pack ./src/Umbraco.Community.HealthProbes/Umbraco.Community.HealthProbes.csproj --configuration Release --no-build --output ./nupkg
+
+      - name: Push all .nupkg files to NuGet
+        run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
