@@ -1,3 +1,5 @@
+using Umbraco.Community.HealthProbes.Extensions;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.CreateUmbracoBuilder()
@@ -21,5 +23,7 @@ app.UseUmbraco()
         u.UseBackOfficeEndpoints();
         u.UseWebsiteEndpoints();
     });
+
+app.UseUmbracoHealthProbes();
 
 await app.RunAsync();

@@ -30,4 +30,8 @@
 <PackageReference Include="Umbraco.Cms.Core" Version="[17.0.0, 18.0.0)" />
 </ItemGroup>
 
+<ItemGroup>
+<FrameworkReference Include="Microsoft.AspNetCore.App" />
+</ItemGroup>
+
 </Project>
