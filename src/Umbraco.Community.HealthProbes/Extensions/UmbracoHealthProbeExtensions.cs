@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Community.HealthProbes.Filters;
 
 namespace Umbraco.Community.HealthProbes.Extensions;
 
@@ -13,6 +14,20 @@ public static class UmbracoHealthProbeExtensions
         /// <summary>
         /// Maps Kubernetes liveness, readiness, and startup probe endpoints for an Umbraco application.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Options are read from the <c>UmbracoHealthProbes</c> configuration section. When
+        /// <c>AllowedNetworks</c> is empty (the default) all requests are allowed. When one or more
+        /// entries are configured only requests from those IP addresses or CIDR ranges are allowed;
+        /// all others receive <c>403 Forbidden</c>.
+        /// </para>
+        /// <para>
+        /// If the application runs behind a reverse proxy or Kubernetes ingress controller, configure
+        /// <c>ForwardedHeadersMiddleware</c> and trusted proxies so that the real client IP is
+        /// available on <c>HttpContext.Connection.RemoteIpAddress</c> before the filter runs.
+        /// The package does not enable forwarded-headers middleware automatically.
+        /// </para>
+        /// </remarks>
         /// <param name="livePath">The liveness endpoint path.</param>
         /// <param name="readyPath">The readiness endpoint path.</param>
         /// <param name="startupPath">The startup endpoint path.</param>
@@ -23,13 +38,16 @@ public static class UmbracoHealthProbeExtensions
             string startupPath = "/health/startup")
         {
             endpoints.MapGet(livePath, static () => Results.Ok("OK"))
-                .AllowAnonymous();
+                .AllowAnonymous()
+                .AddEndpointFilter<HealthProbeIpAllowlistFilter>();
 
             endpoints.MapGet(readyPath, ReadyCheck)
-                .AllowAnonymous();
+                .AllowAnonymous()
+                .AddEndpointFilter<HealthProbeIpAllowlistFilter>();
 
             endpoints.MapGet(startupPath, StartupCheck)
-                .AllowAnonymous();
+                .AllowAnonymous()
+                .AddEndpointFilter<HealthProbeIpAllowlistFilter>();
 
             return endpoints;
         }
