@@ -75,4 +75,4 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 app.UseForwardedHeaders();
 ```
 
-> **Note:** The package does **not** enable forwarded-headers middleware automatically. Misconfigured trusted proxy settings can allow IP spoofing; always restrict `KnownProxies`/`KnownNetworks` to your actual infrastructure.
+> **Note:** The package does **not** enable forwarded-headers middleware automatically. Always restrict `KnownProxies`/`KnownNetworks` to your actual infrastructure IP ranges. A misconfigured or unrestricted forwarded-headers setup allows clients to spoof their IP address by setting `X-Forwarded-For` headers directly, bypassing the allowlist.

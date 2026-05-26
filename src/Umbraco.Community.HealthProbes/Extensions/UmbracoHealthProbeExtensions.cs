@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Community.HealthProbes.Filters;
@@ -37,17 +39,25 @@ public static class UmbracoHealthProbeExtensions
             string readyPath = "/health/ready",
             string startupPath = "/health/startup")
         {
+            // Parse the allowlist once at startup so individual requests perform only in-memory checks.
+            IConfiguration configuration = endpoints.ServiceProvider.GetRequiredService<IConfiguration>();
+            string[] allowedNetworks = configuration
+                .GetSection($"{Constants.PackageName}:{nameof(UmbracoHealthProbeOptions.AllowedNetworks)}")
+                .Get<string[]>() ?? [];
+
+            HealthProbeIpAllowlistFilter filter = HealthProbeIpAllowlistFilter.Create(allowedNetworks);
+
             endpoints.MapGet(livePath, static () => Results.Ok("OK"))
                 .AllowAnonymous()
-                .AddEndpointFilter<HealthProbeIpAllowlistFilter>();
+                .AddEndpointFilter(filter);
 
             endpoints.MapGet(readyPath, ReadyCheck)
                 .AllowAnonymous()
-                .AddEndpointFilter<HealthProbeIpAllowlistFilter>();
+                .AddEndpointFilter(filter);
 
             endpoints.MapGet(startupPath, StartupCheck)
                 .AllowAnonymous()
-                .AddEndpointFilter<HealthProbeIpAllowlistFilter>();
+                .AddEndpointFilter(filter);
 
             return endpoints;
         }
