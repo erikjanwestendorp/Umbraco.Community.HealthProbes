@@ -42,8 +42,9 @@ public static class UmbracoHealthProbeExtensions
             // Parse the allowlist once at startup so individual requests perform only in-memory checks.
             IConfiguration configuration = endpoints.ServiceProvider.GetRequiredService<IConfiguration>();
             string[] allowedNetworks = configuration
-                .GetSection($"{Constants.PackageName}:{nameof(UmbracoHealthProbeOptions.AllowedNetworks)}")
-                .Get<string[]>() ?? [];
+                .GetSection(Constants.PackageName)
+                .Get<UmbracoHealthProbeOptions>()
+                ?.AllowedNetworks ?? [];
 
             HealthProbeIpAllowlistFilter filter = HealthProbeIpAllowlistFilter.Create(allowedNetworks);
 
