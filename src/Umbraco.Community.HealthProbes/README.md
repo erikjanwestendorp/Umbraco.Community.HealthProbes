@@ -20,16 +20,18 @@ This maps three anonymous endpoints:
 
 ## IP Allowlist
 
-To restrict access to the health endpoints, add an `UmbracoHealthProbes` section to `appsettings.json`:
+To restrict access to the health endpoints, add a `HealthProbes` section under `Umbraco` in `appsettings.json`:
 
 ```json
 {
-  "UmbracoHealthProbes": {
-    "AllowedNetworks": [
-      "127.0.0.1/32",
-      "::1/128",
-      "10.0.0.0/8"
-    ]
+  "Umbraco": {
+    "HealthProbes": {
+      "AllowedNetworks": [
+        "127.0.0.1/32",
+        "::1/128",
+        "10.0.0.0/8"
+      ]
+    }
   }
 }
 ```
@@ -49,8 +51,8 @@ Supported formats:
 The allowlist can also be configured via environment variables, which is convenient for Kubernetes ConfigMaps and Helm values:
 
 ```bash
-UmbracoHealthProbes__AllowedNetworks__0=127.0.0.1/32
-UmbracoHealthProbes__AllowedNetworks__1=10.0.0.0/8
+Umbraco__HealthProbes__AllowedNetworks__0=127.0.0.1/32
+Umbraco__HealthProbes__AllowedNetworks__1=10.0.0.0/8
 ```
 
 ### Reverse proxy / Kubernetes ingress

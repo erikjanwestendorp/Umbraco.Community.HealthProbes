@@ -18,7 +18,7 @@ public static class UmbracoHealthProbeExtensions
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Options are read from the <c>UmbracoHealthProbes</c> configuration section. When
+        /// Options are read from the <c>Umbraco:HealthProbes</c> configuration section. When
         /// <c>AllowedNetworks</c> is empty (the default) all requests are allowed. When one or more
         /// entries are configured only requests from those IP addresses or CIDR ranges are allowed;
         /// all others receive <c>403 Forbidden</c>.
@@ -42,7 +42,7 @@ public static class UmbracoHealthProbeExtensions
             // Parse the allowlist once at startup so individual requests perform only in-memory checks.
             IConfiguration configuration = endpoints.ServiceProvider.GetRequiredService<IConfiguration>();
             string[] allowedNetworks = configuration
-                .GetSection(Constants.PackageName)
+                .GetSection(Constants.ConfigurationSection)
                 .Get<UmbracoHealthProbeOptions>()
                 ?.AllowedNetworks ?? [];
 
