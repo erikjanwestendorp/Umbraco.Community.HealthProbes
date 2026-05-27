@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Community.HealthProbes.Filters;
 
 namespace Umbraco.Community.HealthProbes.Extensions;
 
@@ -13,6 +16,20 @@ public static class UmbracoHealthProbeExtensions
         /// <summary>
         /// Maps Kubernetes liveness, readiness, and startup probe endpoints for an Umbraco application.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Options are read from the <c>Umbraco:HealthProbes</c> configuration section. When
+        /// <c>AllowedNetworks</c> is empty (the default) all requests are allowed. When one or more
+        /// entries are configured only requests from those IP addresses or CIDR ranges are allowed;
+        /// all others receive <c>403 Forbidden</c>.
+        /// </para>
+        /// <para>
+        /// If the application runs behind a reverse proxy or Kubernetes ingress controller, configure
+        /// <c>ForwardedHeadersMiddleware</c> and trusted proxies so that the real client IP is
+        /// available on <c>HttpContext.Connection.RemoteIpAddress</c> before the filter runs.
+        /// The package does not enable forwarded-headers middleware automatically.
+        /// </para>
+        /// </remarks>
         /// <param name="livePath">The liveness endpoint path.</param>
         /// <param name="readyPath">The readiness endpoint path.</param>
         /// <param name="startupPath">The startup endpoint path.</param>
@@ -22,14 +39,26 @@ public static class UmbracoHealthProbeExtensions
             string readyPath = "/health/ready",
             string startupPath = "/health/startup")
         {
+            // Parse the allowlist once at startup so individual requests perform only in-memory checks.
+            IConfiguration configuration = endpoints.ServiceProvider.GetRequiredService<IConfiguration>();
+            string[] allowedNetworks = configuration
+                .GetSection(Constants.ConfigurationSection)
+                .Get<UmbracoHealthProbeOptions>()
+                ?.AllowedNetworks ?? [];
+
+            HealthProbeIpAllowlistFilter filter = HealthProbeIpAllowlistFilter.Create(allowedNetworks);
+
             endpoints.MapGet(livePath, static () => Results.Ok("OK"))
-                .AllowAnonymous();
+                .AllowAnonymous()
+                .AddEndpointFilter(filter);
 
             endpoints.MapGet(readyPath, ReadyCheck)
-                .AllowAnonymous();
+                .AllowAnonymous()
+                .AddEndpointFilter(filter);
 
             endpoints.MapGet(startupPath, StartupCheck)
-                .AllowAnonymous();
+                .AllowAnonymous()
+                .AddEndpointFilter(filter);
 
             return endpoints;
         }
