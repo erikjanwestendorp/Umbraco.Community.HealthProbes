@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Community.HealthProbes.Filters;
@@ -46,7 +47,8 @@ public static class UmbracoHealthProbeExtensions
                 .Get<UmbracoHealthProbeOptions>()
                 ?.AllowedNetworks ?? [];
 
-            HealthProbeIpAllowlistFilter filter = HealthProbeIpAllowlistFilter.Create(allowedNetworks);
+            ILogger<HealthProbeIpAllowlistFilter> logger = endpoints.ServiceProvider.GetRequiredService<ILogger<HealthProbeIpAllowlistFilter>>();
+            HealthProbeIpAllowlistFilter filter = HealthProbeIpAllowlistFilter.Create(allowedNetworks, logger);
 
             endpoints.MapGet(livePath, static () => Results.Ok("OK"))
                 .AllowAnonymous()
