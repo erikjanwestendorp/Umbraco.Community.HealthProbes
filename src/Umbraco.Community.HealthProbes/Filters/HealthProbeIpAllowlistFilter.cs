@@ -68,7 +68,7 @@ internal sealed class HealthProbeIpAllowlistFilter : IEndpointFilter
 
         if (result is IStatusCodeHttpResult { StatusCode: int value })
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Handled {HealthProbeEndpoint} request from {RemoteIpAddress} with status code {StatusCode}.",
                 endpointLabel,
                 remoteIpText,
@@ -76,7 +76,7 @@ internal sealed class HealthProbeIpAllowlistFilter : IEndpointFilter
         }
         else
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Handled {HealthProbeEndpoint} request from {RemoteIpAddress}.",
                 endpointLabel,
                 remoteIpText);
