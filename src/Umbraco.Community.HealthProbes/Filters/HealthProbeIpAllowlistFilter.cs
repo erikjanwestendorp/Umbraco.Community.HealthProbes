@@ -65,9 +65,8 @@ internal sealed class HealthProbeIpAllowlistFilter : IEndpointFilter
         }
 
         object? result = await next(context);
-        int? statusCode = (result as IStatusCodeHttpResult)?.StatusCode;
 
-        if (statusCode is int value)
+        if (result is IStatusCodeHttpResult { StatusCode: int value })
         {
             _logger.LogDebug(
                 "Handled {HealthProbeEndpoint} request from {RemoteIpAddress} with status code {StatusCode}.",
@@ -87,7 +86,7 @@ internal sealed class HealthProbeIpAllowlistFilter : IEndpointFilter
     }
 
     private static string GetEndpointLabel(HttpContext httpContext)
-        => httpContext.GetEndpoint()?.DisplayName ?? "health probe";
+        => httpContext.GetEndpoint()?.DisplayName ?? "unknown health probe endpoint";
 
     private static string FormatRemoteIp(IPAddress? remoteIp)
     {
