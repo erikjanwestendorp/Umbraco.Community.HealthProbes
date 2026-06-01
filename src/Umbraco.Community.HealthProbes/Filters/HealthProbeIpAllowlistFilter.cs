@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Umbraco.Community.HealthProbes.Filters;
 
@@ -26,34 +27,77 @@ namespace Umbraco.Community.HealthProbes.Filters;
 internal sealed class HealthProbeIpAllowlistFilter : IEndpointFilter
 {
     private readonly ParsedNetwork[] _networks;
+    private readonly ILogger<HealthProbeIpAllowlistFilter> _logger;
 
-    private HealthProbeIpAllowlistFilter(ParsedNetwork[] networks)
-        => _networks = networks;
+    private HealthProbeIpAllowlistFilter(
+        ParsedNetwork[] networks,
+        ILogger<HealthProbeIpAllowlistFilter> logger)
+    {
+        _networks = networks;
+        _logger = logger;
+    }
 
     /// <summary>
     /// Creates a <see cref="HealthProbeIpAllowlistFilter"/> instance from the raw <paramref name="allowedNetworks"/>
     /// configuration strings. The strings are parsed once here so that per-request handling only performs
     /// in-memory comparisons.
     /// </summary>
-    internal static HealthProbeIpAllowlistFilter Create(string[] allowedNetworks)
-        => new(ParseNetworks(allowedNetworks));
+    internal static HealthProbeIpAllowlistFilter Create(
+        string[] allowedNetworks,
+        ILogger<HealthProbeIpAllowlistFilter> logger)
+        => new(ParseNetworks(allowedNetworks), logger);
 
     /// <inheritdoc />
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        if (_networks.Length == 0)
-        {
-            return await next(context);
-        }
-
+        string endpointLabel = GetEndpointLabel(context.HttpContext);
         IPAddress? remoteIp = context.HttpContext.Connection.RemoteIpAddress;
+        string remoteIpText = FormatRemoteIp(remoteIp);
 
-        if (remoteIp is null || !IsAllowed(remoteIp, _networks))
+        if (_networks.Length > 0 && (remoteIp is null || !IsAllowed(remoteIp, _networks)))
         {
+            _logger.LogWarning(
+                "Denied {HealthProbeEndpoint} request from {RemoteIpAddress}.",
+                endpointLabel,
+                remoteIpText);
+
             return Results.StatusCode(StatusCodes.Status403Forbidden);
         }
 
-        return await next(context);
+        object? result = await next(context);
+
+        if (result is IStatusCodeHttpResult { StatusCode: int value })
+        {
+            _logger.LogDebug(
+                "Handled {HealthProbeEndpoint} request from {RemoteIpAddress} with status code {StatusCode}.",
+                endpointLabel,
+                remoteIpText,
+                value);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "Handled {HealthProbeEndpoint} request from {RemoteIpAddress}.",
+                endpointLabel,
+                remoteIpText);
+        }
+
+        return result;
+    }
+
+    private static string GetEndpointLabel(HttpContext httpContext)
+        => httpContext.GetEndpoint()?.DisplayName ?? "unknown health probe endpoint";
+
+    private static string FormatRemoteIp(IPAddress? remoteIp)
+    {
+        if (remoteIp is null)
+        {
+            return "unknown";
+        }
+
+        return remoteIp.IsIPv4MappedToIPv6
+            ? remoteIp.MapToIPv4().ToString()
+            : remoteIp.ToString();
     }
 
     private static bool IsAllowed(IPAddress remoteIp, ParsedNetwork[] networks)

@@ -18,6 +18,8 @@ This maps three anonymous endpoints:
 | `GET /health/ready` | Readiness probe – returns `200 OK` when Umbraco runtime is at `Run` level, otherwise `503` |
 | `GET /health/startup` | Startup probe – same semantics as readiness |
 
+Every request to these endpoints is logged centrally with the caller IP address from `HttpContext.Connection.RemoteIpAddress`. Denied requests are logged at warning level and allowed requests are logged at debug level.
+
 ## IP Allowlist
 
 To restrict access to the health endpoints, add a `HealthProbes` section under `Umbraco` in `appsettings.json`:
@@ -78,3 +80,5 @@ app.UseForwardedHeaders();
 ```
 
 > **Note:** The package does **not** enable forwarded-headers middleware automatically. Always restrict `KnownProxies`/`KnownNetworks` to your actual infrastructure IP ranges. A misconfigured or unrestricted forwarded-headers setup allows clients to spoof their IP address by setting `X-Forwarded-For` headers directly, bypassing the allowlist.
+
+When forwarded headers are configured correctly by the host application, the health probe request logs use the forwarded client IP address exposed through `RemoteIpAddress`.
