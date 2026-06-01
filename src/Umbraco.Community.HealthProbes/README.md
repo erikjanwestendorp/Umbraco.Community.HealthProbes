@@ -18,7 +18,7 @@ This maps three anonymous endpoints:
 | `GET /health/ready` | Readiness probe – returns `200 OK` when Umbraco runtime is at `Run` level, otherwise `503` |
 | `GET /health/startup` | Startup probe – same semantics as readiness |
 
-Every request to these endpoints is logged centrally with the caller IP address from `HttpContext.Connection.RemoteIpAddress`. Denied requests are logged at warning level and allowed requests are logged at information level.
+Every request to these endpoints is logged centrally with the caller IP address from `HttpContext.Connection.RemoteIpAddress`. Denied requests are logged at warning level and allowed requests are logged at debug level.
 
 ## IP Allowlist
 

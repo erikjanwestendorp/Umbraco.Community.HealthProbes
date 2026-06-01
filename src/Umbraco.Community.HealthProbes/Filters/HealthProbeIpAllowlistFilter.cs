@@ -50,15 +50,15 @@ internal sealed class HealthProbeIpAllowlistFilter : IEndpointFilter
     /// <inheritdoc />
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        string path = context.HttpContext.Request.Path;
+        string endpointLabel = GetEndpointLabel(context.HttpContext);
         IPAddress? remoteIp = context.HttpContext.Connection.RemoteIpAddress;
         string remoteIpText = FormatRemoteIp(remoteIp);
 
         if (_networks.Length > 0 && (remoteIp is null || !IsAllowed(remoteIp, _networks)))
         {
             _logger.LogWarning(
-                "Denied health probe request to {Path} from {RemoteIpAddress}.",
-                path,
+                "Denied {HealthProbeEndpoint} request from {RemoteIpAddress}.",
+                endpointLabel,
                 remoteIpText);
 
             return Results.StatusCode(StatusCodes.Status403Forbidden);
@@ -69,22 +69,25 @@ internal sealed class HealthProbeIpAllowlistFilter : IEndpointFilter
 
         if (statusCode is int value)
         {
-            _logger.LogInformation(
-                "Handled health probe request to {Path} from {RemoteIpAddress} with status code {StatusCode}.",
-                path,
+            _logger.LogDebug(
+                "Handled {HealthProbeEndpoint} request from {RemoteIpAddress} with status code {StatusCode}.",
+                endpointLabel,
                 remoteIpText,
                 value);
         }
         else
         {
-            _logger.LogInformation(
-                "Handled health probe request to {Path} from {RemoteIpAddress}.",
-                path,
+            _logger.LogDebug(
+                "Handled {HealthProbeEndpoint} request from {RemoteIpAddress}.",
+                endpointLabel,
                 remoteIpText);
         }
 
         return result;
     }
+
+    private static string GetEndpointLabel(HttpContext httpContext)
+        => httpContext.GetEndpoint()?.DisplayName ?? "health probe";
 
     private static string FormatRemoteIp(IPAddress? remoteIp)
     {
