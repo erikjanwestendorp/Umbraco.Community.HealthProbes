@@ -7,7 +7,7 @@
 </PropertyGroup>
 
 <PropertyGroup>
-<Version>1.0.0-beta1</Version>
+<Version>1.0.0-rc1</Version>
 <PackageId>Umbraco.Community.HealthProbes</PackageId>
 <Product>Umbraco.Community.HealthProbes</Product>
 <Title>Umbraco.Community.HealthProbes</Title>
